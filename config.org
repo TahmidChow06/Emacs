@@ -1,18 +1,33 @@
-+STARTUP: overview
+#+STARTUP: overview
 
 * Interface Tweaks
 #+BEGIN_SRC emacs-lisp
-;; (setq inhibit-startup-message t) 
-(blink-cursor-mode -1)
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(electric-pair-mode 1)
-(fset 'yes-or-no-p 'y-or-n-p)
-(global-display-line-numbers-mode)	;
-(setq org-hide-emphasis-markers t)
-;(setq display-line-numbers-type 'relative)
+(setq inhibit-startup-message t)
+  (blink-cursor-mode -1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)           ; Disable tooltips
+
+  (electric-pair-mode 1)
+  (fset 'yes-or-no-p 'y-or-n-p)
+  (global-display-line-numbers-mode t)
+  (setq org-hide-emphasis-markers t)
+  ;(setq display-line-numbers-type 'relative)
 #+END_SRC
+
+* Transparency
+  
+#+begin_src emacs-lisp
+;; Tranparency
+(defvar efs/frame-transparency '(83 . 83))
+
+(set-frame-parameter (selected-frame) 'alpha efs/frame-transparency)
+(add-to-list 'default-frame-alist `(alpha . ,efs/frame-transparency))
+(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+#+end_src
 
 * Dashboard
 #+BEGIN_SRC emacs-lisp
@@ -20,15 +35,15 @@
 :ensure t
 :config
 (dashboard-setup-startup-hook)
-;; (setq dashboard-startup-banner "~/.emacs.d/img/avatar.png")
+ (setq dashboard-startup-banner "~/.emacs.d/img/computer.png")
 ;;	(projects . 5)))
-(setq dashboard-banner-logo-title "A dude with a laptop running Artix"))
+(setq dashboard-banner-logo-title "Be Productive"))
 #+END_SRC
 
 * Font
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'default-frame-alist
-         '(font . "Iosevka 12"))
+         '(font . "VictorMono Nerd Font-12"))
 #+END_SRC
 
 * Syntax(flycheck)
@@ -40,16 +55,36 @@
       (global-flycheck-mode t))
 #+END_SRC
 
+* Lsp
+#+BEGIN_SRC emacs-lisp
+  (use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  (setq lsp-headerline-breadcrumb-enable nil))
+#+END_SRC
+* Company
+#+BEGIN_SRC emacs-lisp
+(use-package company
+:after lsp-mode
+:hook (lsp-mode . company-mode)
+:bind (:map company-active-map
+("<tab>" . company-complete-selection))
+(:map lsp-mode-map
+("<tab>" . company-indent-or-complete-common))
+:custom
+(company-minimum-prefix-length 1)
+(company-idle-delay 0.0))
+#+END_SRC
 * Theme
  #+BEGIN_SRC emacs-lisp
    (use-package doom-modeline
-   :ensure t
-   :config
-   (doom-modeline-mode 0))
+   :init (doom-modeline-mode 1)
+   :custom ((doom-modeline-height 10)))
    (use-package doom-themes
    :ensure t
    :config
-   (load-theme 'doom-monokai-classic t))
+   (load-theme 'doom-Iosvkem t))
    (use-package atom-one-dark-theme
    :ensure t)
 
@@ -94,25 +129,52 @@
     (global-set-key [remap other-window] 'ace-window)
     (custom-set-faces
    '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
+     ((t (:inherit ace-jump-face-foreground :height 2.0))))) 
     ))
 #+END_SRC
 
 * Helm
   Searching(like ivy)
 #+BEGIN_SRC emacs-lisp
-(use-package helm
-:ensure t
-:config
-(setq helm-display-function 'helm-display-buffer-in-own-frame)
-(helm-mode 1) ; to get helm even if i do load-theme
-:bind(
-("C-x C-f" . helm-find-files)
-("C-x C-b" . helm-buffers-list)
-("C-s" . helm-occur)
-("M-x" . helm-M-x))
-)
+;; (use-package helm
+;; :ensure t
+;; :config
+;; ;;(setq helm-display-function 'helm-display-buffer-in-own-frame)
+;; (helm-mode 1) ; to get helm even if i do load-theme
+;; :bind(
+;; ("C-x C-f" . helm-find-files)
+;; ("C-x C-b" . helm-buffers-list)
+;; ("C-s" . helm-occur)
+;; ("M-x" . helm-M-x))
+;; )
 #+END_SRC
+
+* Ivy
+#+BEGIN_SRC emacs-lisp
+(use-package swiper)
+   (use-package ivy
+:bind (("C-s" . swiper)
+       :map ivy-minibuffer-map
+       ;("TAB" . ivy-alt-done)	
+       ("C-j" . ivy-next-line)
+       ("C-k" . ivy-previous-line)
+       :map ivy-switch-buffer-map
+       ("C-k" . ivy-previous-line)
+       ("C-l" . ivy-done)
+       ("C-d" . ivy-switch-buffer-kill)
+       :map ivy-reverse-i-search-map
+       ("C-k" . ivy-previous-line)
+       ("C-d" . ivy-reverse-i-search-kill))
+ :config
+  (ivy-mode 1))
+   ;; Ivy-rich
+   ;;This package comes with rich transformers for commands from ivy and counsel. It should be easy enough to define your own transformers too.
+ ;  (use-package ivy-rich
+ ;    :after ivy
+ ;    :init
+  ;    (ivy-rich-mode 1))
+#+END_SRC
+
 * avy
   It's like vim easy-motion
 #+BEGIN_SRC emacs-lisp  
@@ -137,10 +199,10 @@
 * Evil mode
   creates vi layer for emacs
 #+BEGIN_SRC emacs-lisp
-    (use-package evil
-       :ensure t
-       :config
-       (evil-mode 1 ))
+  (use-package evil
+  :ensure t
+  :config
+  (evil-mode 1 ))
   (use-package evil-surround
   :ensure t
   :config
@@ -171,25 +233,29 @@
       auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
 #+END_SRC
 
-* Prettier
-#+BEGIN_SRC emacs-lisp
-  (use-package prettier
-  :ensure t)
-#+END_SRC
-
 * centaur tabs
   tab bar for emacs
 #+BEGIN_SRC emacs-lisp
-(use-package centaur-tabs
-:ensure t
-:config
+ (use-package centaur-tabs
+ :config
  (setq centaur-tabs-set-bar 'under
-       x-underline-at-descent-line t
-       centaur-tabs-set-close-button nil
-       centaur-tabs-height 27
-       centaur-tabs-set-icons t)
-(centaur-tabs-mode 0))
+  x-underline-at-descent-line t
+  centaur-tabs-set-close-button nil
+  centaur-tabs-height 27
+  centaur-tabs-style "rounded"
+  centaur-tabs-set-icons t)
+  (centaur-tabs-mode t)
+:hook
+(dashboard-mode . centaur-tabs-local-mode))
+
 #+END_SRC
+
+* Neotree
+#+begin_src emacs-lisp
+    (use-package neotree
+    :ensure t
+    :bind ("C-x e" . neotree-toggle))
+#+end_src
 
 * Helm Google
   google with helm
@@ -203,6 +269,8 @@
 * Binding
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-x j") 'enlarge-window)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
 #+end_src
 
 * yasnippet
